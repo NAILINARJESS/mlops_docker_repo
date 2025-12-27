@@ -4,7 +4,7 @@ pipeline {
     DOCKER_HOST = "tcp://host.docker.internal:2375"
     IMAGE_API = "bot-api:latest"
     IMAGE_FRONTEND = "bot-frontend:latest"
-    COMPOSE_FILE = "src/docker-compose.yml"
+    COMPOSE_FILE = "docker-compose.yml"
 }
 
 
@@ -32,6 +32,7 @@ pipeline {
                 script {
                     sh 'docker compose -f $COMPOSE_FILE down || true'
                     sh 'docker compose -f $COMPOSE_FILE up -d --build'
+                    
                 }
             }
         }
