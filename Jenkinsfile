@@ -1,4 +1,4 @@
-pipeline {
+pipeline { 
     agent any
 
     environment {
@@ -6,35 +6,38 @@ pipeline {
         IMAGE_API = "bot-api:latest"
         IMAGE_FRONTEND = "bot-frontend:latest"
         COMPOSE_FILE = "docker-compose.yml"
+        DOCKERHUB_CREDENTIALS = "dockerhub-credentials"
+        GITHUB_CREDENTIALS = "github-credentials"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/NAILINARJESS/mlops_docker_repo.git', branch: 'main', credentialsId: 'github-credentials'
+                echo "Checkout du repository..."
+                git url: 'https://github.com/NAILINARJESS/mlops_docker_repo.git', branch: 'main', credentialsId: "${GITHUB_CREDENTIALS}"
             }
         }
 
         stage('Build Docker Images') {
             steps {
                 echo "Building Docker images..."
-                sh 'docker build -t $IMAGE_API -f src/api/Dockerfile .'
-                sh 'docker build -t $IMAGE_FRONTEND -f src/frontend/Dockerfile .'
-                sh 'docker images'
+                sh "docker build -t $IMAGE_API -f src/api/Dockerfile ."
+                sh "docker build -t $IMAGE_FRONTEND -f src/frontend/Dockerfile ."
+                sh "docker images"
             }
         }
 
         stage('Push Docker Images to Docker Hub') {
             steps {
                 echo "Pushing Docker images to Docker Hub..."
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker tag bot-api:latest $DOCKER_USER/bot-api:latest
-                        docker tag bot-frontend:latest $DOCKER_USER/bot-frontend:latest
-                        docker push $DOCKER_USER/bot-api:latest
-                        docker push $DOCKER_USER/bot-frontend:latest
-                    '''
+                withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                        docker tag $IMAGE_API \$DOCKER_USER/bot-api:latest
+                        docker tag $IMAGE_FRONTEND \$DOCKER_USER/bot-frontend:latest
+                        docker push \$DOCKER_USER/bot-api:latest
+                        docker push \$DOCKER_USER/bot-frontend:latest
+                    """
                 }
             }
         }
@@ -53,6 +56,12 @@ pipeline {
     post {
         always {
             echo "Pipeline terminée. Les containers tournent et les images sont sur Docker Hub."
+        }
+        success {
+            echo "✅ Pipeline CI/CD réussi !"
+        }
+        failure {
+            echo "❌ Pipeline échoué. Vérifie les logs pour corriger les erreurs."
         }
     }
 }
