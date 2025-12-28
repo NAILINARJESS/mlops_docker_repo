@@ -2,17 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // Docker TCP pour Windows
         DOCKER_HOST = "tcp://host.docker.internal:2375"
-        
-        // Noms des images
         IMAGE_API = "bot-api:latest"
         IMAGE_FRONTEND = "bot-frontend:latest"
-
-        // Docker Compose à la racine
         COMPOSE_FILE = "docker-compose.yml"
-
-        // Credentials Jenkins
         DOCKERHUB_CREDENTIALS = "dockerhub-credentials"
         GITHUB_CREDENTIALS = "github-credentials"
     }
@@ -67,7 +60,6 @@ pipeline {
                 echo "Starting containers..."
                 sh "docker compose -f $COMPOSE_FILE up -d --build"
                 
-                echo "Containers en cours d'exécution :"
                 sh "docker ps -a"
             }
         }
